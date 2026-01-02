@@ -200,7 +200,7 @@
 
             .random-btn, .channel-btn {
                 flex: 1;
-                min-width: 100px;
+                min-width: 80px;
             }
         }
     </style>
@@ -216,13 +216,14 @@
 
         <div class="channel-embed">
             <h2>
-                <span>📺 영상</span>
+                <span>📺 최신 영상</span>
                 <div class="buttons-group">
                     <button class="random-btn" id="randomBtn" onclick="playRandomVideo()">🎲 랜덤 재생</button>
-                    <button class="channel-btn" id="channelBtn" onclick="goToChannel()">📋 채널 방문</button>
+                    <button class="channel-btn" id="channelBtn" onclick="goToChannel()">📺 채널 방문</button>
                 </div>
             </h2>
             <iframe id="channelFrame" class="channel-frame" 
+                src="https://www.youtube.com/embed/videoseries?list=UUMwVpslitG_uJVsLwNkO3pw&autoplay=1" 
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
                 allowfullscreen>
             </iframe>
@@ -260,13 +261,12 @@
     <script>
         const CHANNEL_ID = 'UCMwVpslitG_uJVsLwNkO3pw';
         const API_KEY = 'AIzaSyCeUvmDYMkKSWWmMiukg_QPB5CtgkaBz3o';
-        const UPDATE_INTERVAL = 8 * 60 * 60 * 1000; // 8시간
+        const UPDATE_INTERVAL = 8 * 60 * 60 * 1000;
 
         let previousStats = JSON.parse(localStorage.getItem('channelStats')) || null;
         let updateTimer = null;
         let videoList = [];
         let isLoadingVideos = false;
-        let videosLoadAttempts = 0;
 
         function formatNumber(num) {
             return new Intl.NumberFormat('ko-KR').format(num);
@@ -295,67 +295,35 @@
                     if (data.items && data.items.length > 0) {
                         videoList = data.items.map(item => item.id.videoId).filter(id => id);
                         console.log(`${videoList.length}개 영상 로드됨`);
-                        videosLoadAttempts = 0;
-                        isLoadingVideos = false;
-                        return true;
-                    } else {
-                        throw new Error('영상 없음');
                     }
-                } else {
-                    throw new Error('API 요청 실패');
                 }
             } catch (error) {
-                console.log('영상 목록 로드 실패:', error);
-                isLoadingVideos = false;
-                
-                // 3회 재시도
-                if (videosLoadAttempts < 3) {
-                    videosLoadAttempts++;
-                    setTimeout(() => {
-                        loadVideoList();
-                    }, 2000);
-                }
-                return false;
+                console.log('영상 목록 로드 실패');
             }
+            isLoadingVideos = false;
         }
 
         // 랜덤 영상 재생
         async function playRandomVideo() {
-            const btn = document.getElementById('randomBtn');
-            
-            // 영상 목록이 없으면 로드 시도
             if (videoList.length === 0) {
-                btn.disabled = true;
-                const originalText = btn.textContent;
-                btn.textContent = '⏳ 로딩 중...';
+                await loadVideoList();
                 
-                // 로딩 중이 아니면 새로 로드
-                if (!isLoadingVideos) {
-                    await loadVideoList();
-                }
-                
-                // 최대 5초 기다린 후 확인
                 for (let i = 0; i < 10; i++) {
                     if (videoList.length > 0) break;
                     await new Promise(resolve => setTimeout(resolve, 500));
                 }
-                
-                btn.disabled = false;
-                btn.textContent = originalText;
-                
-                if (videoList.length === 0) {
-                    alert('영상을 불러올 수 없습니다. 인터넷 연결을 확인해주세요.');
-                    return;
-                }
+            }
+            
+            if (videoList.length === 0) {
+                alert('영상을 불러올 수 없습니다.');
+                return;
             }
             
             const randomIndex = Math.floor(Math.random() * videoList.length);
             const videoId = videoList[randomIndex];
             
             const iframe = document.getElementById('channelFrame');
-            iframe.src = `https://www.youtube.com/embed/${videoId}`;
-            
-            console.log(`재생: ${videoId}`);
+            iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
         }
 
         // 채널 방문
@@ -366,10 +334,8 @@
         // 통계 로드
         async function loadChannelStats() {
             const loadingEl = document.getElementById('loading');
-            const errorEl = document.getElementById('errorMessage');
             
             loadingEl.style.display = 'block';
-            errorEl.style.display = 'none';
 
             try {
                 const response = await fetch(
@@ -428,20 +394,9 @@
             }
         }
 
-        // 페이지 로드 시 실행
         window.onload = function() {
             loadChannelStats();
             loadVideoList();
-            
-            // 초기 영상 설정 (로드 완료 후)
-            setTimeout(() => {
-                if (videoList.length > 0) {
-                    const randomIndex = Math.floor(Math.random() * videoList.length);
-                    const videoId = videoList[randomIndex];
-                    const iframe = document.getElementById('channelFrame');
-                    iframe.src = `https://www.youtube.com/embed/${videoId}`;
-                }
-            }, 1000);
         };
     </script>
 </body>
