@@ -251,11 +251,9 @@
         const CHANNEL_ID = 'UCMwVpslitG_uJVsLwNkO3pw';
         const API_KEY = 'AIzaSyASFF7thpjzrFOkWkTs4AKt1sKYqyu27mI';
         const PLAYLIST_ID = 'UUMwVpslitG_uJVsLwNkO3pw';
-        const UPDATE_INTERVAL = 8 * 60 * 60 * 1000;
 
-        let previousStats = JSON.parse(localStorage.getItem('channelStats')) || null;
-        let updateTimer = null;
         let videoList = [];
+        let previousStats = null;
 
         function formatNumber(num) {
             return new Intl.NumberFormat('ko-KR').format(num);
@@ -269,7 +267,7 @@
             return `${sign}${formatNumber(growth)}`;
         }
 
-        // 모든 영상 로드 (여러 페이지)
+        // 모든 영상 로드
         async function loadAllVideos() {
             try {
                 let nextPageToken = '';
@@ -354,54 +352,29 @@
                 const currentStats = {
                     subscribers: parseInt(stats.subscriberCount),
                     videos: parseInt(stats.videoCount),
-                    views: parseInt(stats.viewCount),
-                    timestamp: new Date().toISOString()
+                    views: parseInt(stats.viewCount)
                 };
 
                 document.getElementById('subscribers').textContent = formatNumber(currentStats.subscribers);
                 document.getElementById('videos').textContent = formatNumber(currentStats.videos);
                 document.getElementById('views').textContent = formatNumber(currentStats.views);
 
-                if (previousStats) {
-                    const subGrowth = calculateGrowth(currentStats.subscribers, previousStats.subscribers);
-                    const viewGrowth = calculateGrowth(currentStats.views, previousStats.views);
-                    
-                    const subGrowthEl = document.getElementById('subscriberGrowth');
-                    const viewGrowthEl = document.getElementById('viewGrowth');
-                    
-                    if (subGrowth) {
-                        subGrowthEl.textContent = subGrowth;
-                        subGrowthEl.style.display = 'block';
-                        subGrowthEl.className = 'stat-growth' + (currentStats.subscribers < previousStats.subscribers ? ' negative' : '');
-                    }
-                    
-                    if (viewGrowth) {
-                        viewGrowthEl.textContent = viewGrowth;
-                        viewGrowthEl.style.display = 'block';
-                        viewGrowthEl.className = 'stat-growth' + (currentStats.views < previousStats.views ? ' negative' : '');
-                    }
-                }
-
-                localStorage.setItem('channelStats', JSON.stringify(currentStats));
                 previousStats = currentStats;
 
-                if (updateTimer) clearTimeout(updateTimer);
-                updateTimer = setTimeout(loadChannelStats, UPDATE_INTERVAL);
+                setTimeout(loadChannelStats, 8 * 60 * 60 * 1000);
 
             } catch (error) {
                 console.log('통계 로드 실패:', error);
-                if (updateTimer) clearTimeout(updateTimer);
-                updateTimer = setTimeout(loadChannelStats, UPDATE_INTERVAL);
+                setTimeout(loadChannelStats, 8 * 60 * 60 * 1000);
             } finally {
                 loadingEl.style.display = 'none';
             }
         }
 
-        // 페이지 로드 시 실행
+        // 페이지 로드
         window.onload = function() {
             loadChannelStats();
             
-            // 영상 로드 및 첫 랜덤 재생
             loadAllVideos().then(() => {
                 if (videoList.length > 0) {
                     const randomIndex = Math.floor(Math.random() * videoList.length);
