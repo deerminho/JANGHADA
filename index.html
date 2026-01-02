@@ -203,7 +203,7 @@
 
     <script>
         const CHANNEL_ID = 'UCMwVpslitG_uJVsLwNkO3pw';
-        const API_KEY = 'AIzaSyCKHjMBHsbYVWDyv5jhx4dMJEJXU8ZfPQA';
+        const API_KEY = 'AIzaSyBuoonh-2xdqGo8nQfrTEQBeNDfoL-udfU';
         const UPDATE_INTERVAL = 8 * 60 * 60 * 1000; // 8시간 (밀리초)
 
         let previousStats = JSON.parse(localStorage.getItem('channelStats')) || null;
@@ -274,11 +274,9 @@
                 loadingEl.style.display = 'none';
             }
             
-            // 플레이리스트와 함께 특정 영상 재생
+            // 플레이리스트와 함께 특정 영상 재생 (자동재생)
             const iframe = document.getElementById('channelFrame');
-            // 모바일에서는 autoplay 제거, listType 추가로 목록 표시
-            const autoplayParam = isMobile() ? '' : '&autoplay=1';
-            iframe.src = `https://www.youtube.com/embed/${videoId}?list=UUMwVpslitG_uJVsLwNkO3pw${autoplayParam}`;
+            iframe.src = `https://www.youtube.com/embed/${videoId}?list=UUMwVpslitG_uJVsLwNkO3pw&autoplay=1`;
             
             console.log(`영상 ${currentVideoIndex + 1}/${videoList.length} 재생`);
         }
