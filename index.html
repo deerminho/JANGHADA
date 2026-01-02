@@ -210,6 +210,11 @@
         let updateTimer = null;
         let videoList = [];
         let currentVideoIndex = -1;
+        
+        // 모바일 기기 감지
+        function isMobile() {
+            return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        }
 
         // 채널의 영상 목록 가져오기
         async function loadVideoList() {
@@ -253,9 +258,11 @@
                 loadingEl.style.display = 'none';
             }
             
-            // 플레이리스트와 함께 특정 영상 재생 (자동 재생)
+            // 플레이리스트와 함께 특정 영상 재생
             const iframe = document.getElementById('channelFrame');
-            iframe.src = `https://www.youtube.com/embed/${videoId}?list=UUMwVpslitG_uJVsLwNkO3pw&autoplay=1`;
+            // 모바일에서는 autoplay 제거, listType 추가로 목록 표시
+            const autoplayParam = isMobile() ? '' : '&autoplay=1';
+            iframe.src = `https://www.youtube.com/embed/${videoId}?list=UUMwVpslitG_uJVsLwNkO3pw&listType=playlist${autoplayParam}`;
             
             console.log(`영상 ${currentVideoIndex + 1}/${videoList.length} 재생`);
         }
