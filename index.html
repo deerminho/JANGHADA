@@ -113,10 +113,17 @@
             font-weight: bold;
             font-size: 0.9em;
             box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            transition: background 0.3s ease;
         }
 
-        .random-btn:hover {
+        .random-btn:hover:not(:disabled) {
             background: #1873CC;
+        }
+
+        .random-btn:disabled {
+            background: #999;
+            cursor: not-allowed;
+            opacity: 0.8;
         }
 
         .channel-frame {
@@ -162,6 +169,15 @@
             .channel-frame {
                 height: 400px;
             }
+
+            .channel-embed h2 {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .random-btn {
+                width: 100%;
+            }
         }
     </style>
 </head>
@@ -177,7 +193,7 @@
         <div class="channel-embed">
             <h2>
                 <span>📺 최신 영상</span>
-                <button class="random-btn" onclick="playRandomVideo()">🎲 랜덤 재생</button>
+                <button class="random-btn" id="randomBtn" onclick="playRandomVideo()">🎲 랜덤 재생</button>
             </h2>
             <iframe id="channelFrame" class="channel-frame" 
                 src="https://www.youtube.com/embed/videoseries?list=UUMwVpslitG_uJVsLwNkO3pw&autoplay=1" 
@@ -223,6 +239,8 @@
         let previousStats = JSON.parse(localStorage.getItem('channelStats')) || null;
         let updateTimer = null;
         let videoList = [];
+        let isLoadingVideos = false;
+        let videosLoadAttempts = 0;
 
         function formatNumber(num) {
             return new Intl.NumberFormat('ko-KR').format(num);
@@ -238,6 +256,9 @@
 
         // 영상 목록 로드
         async function loadVideoList() {
+            if (isLoadingVideos) return;
+            
+            isLoadingVideos = true;
             try {
                 const response = await fetch(
                     `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${CHANNEL_ID}&maxResults=50&order=date&type=video&key=${API_KEY}`
@@ -245,28 +266,67 @@
                 
                 if (response.ok) {
                     const data = await response.json();
-                    if (data.items) {
+                    if (data.items && data.items.length > 0) {
                         videoList = data.items.map(item => item.id.videoId);
                         console.log(`${videoList.length}개 영상 로드됨`);
+                        videosLoadAttempts = 0;
+                    } else {
+                        throw new Error('영상 없음');
                     }
+                } else {
+                    throw new Error('API 요청 실패');
                 }
             } catch (error) {
-                console.log('영상 목록 로드 실패');
+                console.log('영상 목록 로드 실패:', error);
+                
+                // 3회 재시도
+                if (videosLoadAttempts < 3) {
+                    videosLoadAttempts++;
+                    setTimeout(() => {
+                        isLoadingVideos = false;
+                        loadVideoList();
+                    }, 2000);
+                } else {
+                    isLoadingVideos = false;
+                }
             }
         }
 
         // 랜덤 영상 재생
-        function playRandomVideo() {
+        async function playRandomVideo() {
+            const btn = document.getElementById('randomBtn');
+            
+            // 영상 목록이 없으면 로드 시도
             if (videoList.length === 0) {
-                alert('영상 목록을 불러오는 중입니다. 잠시 후 다시 시도해주세요.');
-                return;
+                btn.disabled = true;
+                const originalText = btn.textContent;
+                btn.textContent = '⏳ 로딩 중...';
+                
+                // 로딩 중이 아니면 새로 로드
+                if (!isLoadingVideos) {
+                    await loadVideoList();
+                }
+                
+                // 최대 5초 기다린 후 확인
+                for (let i = 0; i < 10; i++) {
+                    if (videoList.length > 0) break;
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                }
+                
+                btn.disabled = false;
+                btn.textContent = originalText;
+                
+                if (videoList.length === 0) {
+                    alert('영상을 불러올 수 없습니다. 인터넷 연결을 확인해주세요.');
+                    return;
+                }
             }
             
             const randomIndex = Math.floor(Math.random() * videoList.length);
             const videoId = videoList[randomIndex];
             
             const iframe = document.getElementById('channelFrame');
-            iframe.src = `https://www.youtube.com/embed/${videoId}?list=UUMwVpslitG_uJVsLwNkO3pw&autoplay=1`;
+            iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
         }
 
         // 통계 로드
@@ -334,12 +394,39 @@
             }
         }
 
+        // 영상 목록이 로드될 때까지 기다렸다가 랜덤 영상 재생
+        async function initializeRandomVideo() {
+            // 처음에는 영상 목록이 없으므로 로드 시작
+            if (videoList.length === 0) {
+                await loadVideoList();
+                
+                // 최대 5초 기다렸다가 확인
+                for (let i = 0; i < 10; i++) {
+                    if (videoList.length > 0) {
+                        playRandomVideoOnLoad();
+                        return;
+                    }
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                }
+            }
+        }
+
+        // 페이지 로드 시 랜덤 재생 (버튼 없이 직접 실행)
+        function playRandomVideoOnLoad() {
+            if (videoList.length === 0) return;
+            
+            const randomIndex = Math.floor(Math.random() * videoList.length);
+            const videoId = videoList[randomIndex];
+            
+            const iframe = document.getElementById('channelFrame');
+            iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
+        }
+
         // 페이지 로드 시 실행
         window.onload = function() {
             loadChannelStats();
-            loadVideoList();
+            initializeRandomVideo();
         };
     </script>
 </body>
 </html>
-
