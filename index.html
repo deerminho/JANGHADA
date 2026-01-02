@@ -111,9 +111,9 @@
             flex-wrap: wrap;
         }
 
-        .random-btn, .channel-btn {
+        .channel-btn {
             padding: 8px 16px;
-            background: #1E90FF;
+            background: #40E0D0;
             color: white;
             border: none;
             border-radius: 20px;
@@ -125,24 +125,8 @@
             white-space: nowrap;
         }
 
-        .channel-btn {
-            background: #40E0D0;
-        }
-
-        .random-btn:hover:not(:disabled),
-        .channel-btn:hover:not(:disabled) {
-            background: #1873CC;
-        }
-
-        .channel-btn:hover:not(:disabled) {
+        .channel-btn:hover {
             background: #2CB8A0;
-        }
-
-        .random-btn:disabled,
-        .channel-btn:disabled {
-            background: #999;
-            cursor: not-allowed;
-            opacity: 0.8;
         }
 
         .channel-frame {
@@ -189,7 +173,7 @@
                 width: 100%;
             }
 
-            .random-btn, .channel-btn {
+            .channel-btn {
                 flex: 1;
                 min-width: 80px;
             }
@@ -208,11 +192,11 @@
             <h2>
                 <span>📺 최신 영상</span>
                 <div class="buttons-group">
-                    <button class="random-btn" id="randomBtn" onclick="playRandomVideo()">🎲 랜덤 재생</button>
                     <button class="channel-btn" id="channelBtn" onclick="goToChannel()">📺 채널 방문</button>
                 </div>
             </h2>
             <iframe id="channelFrame" class="channel-frame" 
+                src="https://www.youtube.com/embed/videoseries?list=UUMwVpslitG_uJVsLwNkO3pw&autoplay=1"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
                 allowfullscreen>
             </iframe>
@@ -250,9 +234,7 @@
     <script>
         const CHANNEL_ID = 'UCMwVpslitG_uJVsLwNkO3pw';
         const API_KEY = 'AIzaSyB0W1wDYPUd1BXto5-BNof6JSzdsLPPwNk';
-        const PLAYLIST_ID = 'UUMwVpslitG_uJVsLwNkO3pw';
 
-        let videoList = [];
         let previousStats = null;
 
         function formatNumber(num) {
@@ -265,88 +247,6 @@
             if (growth === 0) return '';
             const sign = growth > 0 ? '+' : '';
             return `${sign}${formatNumber(growth)}`;
-        }
-
-        // 모든 영상 로드
-        async function loadAllVideos() {
-            try {
-                let nextPageToken = '';
-                let allVideos = [];
-                let maxIterations = 0;
-
-                while (nextPageToken !== null && maxIterations < 10) {
-                    const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${CHANNEL_ID}&maxResults=50&order=date&type=video&key=${API_KEY}${nextPageToken ? '&pageToken=' + nextPageToken : ''}`;
-                    
-                    const response = await fetch(url);
-                    
-                    if (response.ok) {
-                        const data = await response.json();
-                        
-                        if (data.items && data.items.length > 0) {
-                            const videos = data.items.map(item => item.id.videoId).filter(id => id);
-                            allVideos = allVideos.concat(videos);
-                        }
-                        
-                        nextPageToken = data.nextPageToken || null;
-                        maxIterations++;
-                    } else {
-                        break;
-                    }
-                }
-                
-                videoList = allVideos;
-                console.log(`총 ${videoList.length}개 영상 로드 완료`);
-                return true;
-            } catch (error) {
-                console.log('영상 로드 실패:', error);
-                return false;
-            }
-        }
-
-        let currentIndex = 0;
-
-        // 특정 영상 재생
-        function playVideo(index) {
-            if (videoList.length === 0) return;
-            
-            currentIndex = index % videoList.length;
-            const videoId = videoList[currentIndex];
-            
-            const iframe = document.getElementById('channelFrame');
-            iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
-            
-            // 다음 영상 자동 재생 설정 (평균 영상 길이 5분 후)
-            setTimeout(() => {
-                playNextVideo();
-            }, 5 * 60 * 1000);
-        }
-
-        // 다음 영상 재생
-        function playNextVideo() {
-            const nextIndex = (currentIndex + 1) % videoList.length;
-            playVideo(nextIndex);
-        }
-
-        // 랜덤 영상 재생
-        async function playRandomVideo() {
-            if (videoList.length === 0) {
-                const btn = document.getElementById('randomBtn');
-                btn.disabled = true;
-                btn.textContent = '⏳ 로딩 중...';
-                
-                await loadAllVideos();
-                
-                btn.disabled = false;
-                btn.textContent = '🎲 랜덤 재생';
-            }
-            
-            if (videoList.length === 0) {
-                alert('영상을 불러올 수 없습니다.');
-                return;
-            }
-            
-            const randomIndex = Math.floor(Math.random() * videoList.length);
-            playVideo(randomIndex);
         }
 
         // 채널 방문
@@ -395,13 +295,6 @@
         // 페이지 로드
         window.onload = function() {
             loadChannelStats();
-            
-            loadAllVideos().then(() => {
-                if (videoList.length > 0) {
-                    const randomIndex = Math.floor(Math.random() * videoList.length);
-                    playVideo(randomIndex);
-                }
-            });
         };
     </script>
 </body>
