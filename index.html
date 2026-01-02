@@ -217,9 +217,6 @@
                     const data = await response.json();
                     videoList = data.items.map(item => item.id.videoId);
                     console.log(`${videoList.length}개의 영상을 불러왔습니다.`);
-                    
-                    // 첫 번째 랜덤 영상 로드
-                    playRandomVideo();
                 }
             } catch (error) {
                 console.log('영상 목록 로드 실패');
