@@ -174,7 +174,7 @@
                     구독자 수
                 </div>
                 <div class="stat-value" id="subscribers">9,420,000</div>
-                <div class="stat-growth" id="subscriberGrowth">+1,234</div>
+                <div class="stat-growth" id="subscriberGrowth" style="display: none;"></div>
             </div>
 
             <div class="stat-card">
@@ -191,7 +191,7 @@
                     총 조회수
                 </div>
                 <div class="stat-value" id="views">4,125,156</div>
-                <div class="stat-growth" id="viewGrowth">+15,678</div>
+                <div class="stat-growth" id="viewGrowth" style="display: none;"></div>
             </div>
         </div>
     </div>
@@ -305,12 +305,17 @@
                     const subGrowthEl = document.getElementById('subscriberGrowth');
                     const viewGrowthEl = document.getElementById('viewGrowth');
                     
-                    subGrowthEl.textContent = subGrowth;
-                    viewGrowthEl.textContent = viewGrowth;
+                    if (subGrowth) {
+                        subGrowthEl.textContent = subGrowth;
+                        subGrowthEl.style.display = 'block';
+                        subGrowthEl.className = 'stat-growth' + (currentStats.subscribers < previousStats.subscribers ? ' negative' : '');
+                    }
                     
-                    // 음수일 경우 빨간색
-                    subGrowthEl.className = 'stat-growth' + (currentStats.subscribers < previousStats.subscribers ? ' negative' : '');
-                    viewGrowthEl.className = 'stat-growth' + (currentStats.views < previousStats.views ? ' negative' : '');
+                    if (viewGrowth) {
+                        viewGrowthEl.textContent = viewGrowth;
+                        viewGrowthEl.style.display = 'block';
+                        viewGrowthEl.className = 'stat-growth' + (currentStats.views < previousStats.views ? ' negative' : '');
+                    }
                 }
 
                 // 현재 통계 저장
