@@ -322,10 +322,9 @@
             }
             
             const randomIndex = Math.floor(Math.random() * videoList.length);
-            const videoId = videoList[randomIndex];
-            
             const iframe = document.getElementById('channelFrame');
-            iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
+            // 플레이리스트의 특정 위치부터 재생 - 자동 연속 재생됨
+            iframe.src = `https://www.youtube.com/embed/videoseries?list=${PLAYLIST_ID}&index=${randomIndex + 1}`;
         }
 
         // 채널 방문
@@ -378,9 +377,9 @@
             loadAllVideos().then(() => {
                 if (videoList.length > 0) {
                     const randomIndex = Math.floor(Math.random() * videoList.length);
-                    const videoId = videoList[randomIndex];
                     const iframe = document.getElementById('channelFrame');
-                    iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
+                    // 플레이리스트 방식으로 재생 - 자동 연속 재생됨
+                    iframe.src = `https://www.youtube.com/embed/videoseries?list=${PLAYLIST_ID}&index=${randomIndex + 1}`;
                 }
             });
         };
