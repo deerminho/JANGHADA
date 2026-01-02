@@ -222,10 +222,7 @@
                     <button class="channel-btn" id="channelBtn" onclick="goToChannel()">📺 채널 방문</button>
                 </div>
             </h2>
-            <iframe id="channelFrame" class="channel-frame" 
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                allowfullscreen>
-            </iframe>
+            <div id="channelFrame" class="channel-frame"></div>
         </div>
 
         <div class="stats-container">
@@ -257,6 +254,7 @@
         </div>
     </div>
 
+    <script src="https://www.youtube.com/iframe_api"></script>
     <script>
         const CHANNEL_ID = 'UCMwVpslitG_uJVsLwNkO3pw';
         const API_KEY = 'AIzaSyCeUvmDYMkKSWWmMiukg_QPB5CtgkaBz3o';
@@ -267,6 +265,7 @@
         let videoList = [];
         let isLoadingVideos = false;
         let currentVideoIndex = 0;
+        let player = null;
 
         function formatNumber(num) {
             return new Intl.NumberFormat('ko-KR').format(num);
@@ -303,14 +302,59 @@
             isLoadingVideos = false;
         }
 
+        // YouTube Player 생성
+        function onYouTubeIframeAPIReady() {
+            console.log('YouTube API 준비됨');
+        }
+
+        function onPlayerReady(event) {
+            console.log('플레이어 로드 완료');
+            event.target.playVideo();
+        }
+
+        function onPlayerStateChange(event) {
+            // 0 = ENDED, 1 = PLAYING, 2 = PAUSED, 3 = BUFFERING, 5 = CUED
+            if (event.data === 0) {
+                console.log('영상 끝남, 다음 재생');
+                playNextVideo();
+            }
+        }
+
         // 특정 영상 재생
         function playVideo(index) {
             if (videoList.length === 0) return;
             
             currentVideoIndex = index % videoList.length;
             const videoId = videoList[currentVideoIndex];
-            const iframe = document.getElementById('channelFrame');
-            iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
+            
+            // 기존 플레이어 제거
+            const container = document.getElementById('channelFrame');
+            if (player) {
+                try {
+                    player.destroy();
+                } catch (e) {}
+            }
+            container.innerHTML = '';
+            
+            // 새 플레이어 생성
+            player = new YT.Player('channelFrame', {
+                height: '600',
+                width: '100%',
+                videoId: videoId,
+                events: {
+                    'onReady': onPlayerReady,
+                    'onStateChange': onPlayerStateChange
+                },
+                playerVars: {
+                    'autoplay': 1
+                }
+            });
+        }
+
+        // 다음 영상 재생
+        function playNextVideo() {
+            const nextIndex = (currentVideoIndex + 1) % videoList.length;
+            playVideo(nextIndex);
         }
 
         // 랜덤 영상 재생
@@ -332,17 +376,6 @@
             const randomIndex = Math.floor(Math.random() * videoList.length);
             playVideo(randomIndex);
         }
-
-        // 다음 영상 자동 재생 (iframe의 onEnded 대신 주기적으로 확인)
-        setInterval(() => {
-            if (videoList.length > 0 && currentVideoIndex >= 0) {
-                // 영상이 끝나면 다음 영상 재생
-                const nextIndex = (currentVideoIndex + 1) % videoList.length;
-                if (currentVideoIndex !== nextIndex) {
-                    playVideo(nextIndex);
-                }
-            }
-        }, 1000);
 
         // 채널 방문
         function goToChannel() {
