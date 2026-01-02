@@ -303,6 +303,30 @@
             }
         }
 
+        let currentIndex = 0;
+
+        // 특정 영상 재생
+        function playVideo(index) {
+            if (videoList.length === 0) return;
+            
+            currentIndex = index % videoList.length;
+            const videoId = videoList[currentIndex];
+            
+            const iframe = document.getElementById('channelFrame');
+            iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
+            
+            // 다음 영상 자동 재생 설정 (평균 영상 길이 5분 후)
+            setTimeout(() => {
+                playNextVideo();
+            }, 5 * 60 * 1000);
+        }
+
+        // 다음 영상 재생
+        function playNextVideo() {
+            const nextIndex = (currentIndex + 1) % videoList.length;
+            playVideo(nextIndex);
+        }
+
         // 랜덤 영상 재생
         async function playRandomVideo() {
             if (videoList.length === 0) {
@@ -322,9 +346,7 @@
             }
             
             const randomIndex = Math.floor(Math.random() * videoList.length);
-            const iframe = document.getElementById('channelFrame');
-            // 플레이리스트의 특정 위치부터 재생 - 자동 연속 재생됨
-            iframe.src = `https://www.youtube.com/embed/videoseries?list=${PLAYLIST_ID}&index=${randomIndex + 1}`;
+            playVideo(randomIndex);
         }
 
         // 채널 방문
@@ -377,9 +399,7 @@
             loadAllVideos().then(() => {
                 if (videoList.length > 0) {
                     const randomIndex = Math.floor(Math.random() * videoList.length);
-                    const iframe = document.getElementById('channelFrame');
-                    // 플레이리스트 방식으로 재생 - 자동 연속 재생됨
-                    iframe.src = `https://www.youtube.com/embed/videoseries?list=${PLAYLIST_ID}&index=${randomIndex + 1}`;
+                    playVideo(randomIndex);
                 }
             });
         };
