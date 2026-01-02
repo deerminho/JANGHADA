@@ -156,10 +156,7 @@
         <div id="loading" class="loading" style="display: none;">데이터를 불러오는 중...</div>
 
         <div class="channel-embed">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                <h2 style="margin: 0;">📺 최신 영상</h2>
-                <button onclick="playRandomVideo()" style="padding: 8px 16px; background: #1E90FF; color: white; border: none; border-radius: 20px; cursor: pointer; font-weight: bold; font-size: 0.9em;">🎲 다른 영상</button>
-            </div>
+            <h2>📺 최신 영상</h2>
             <iframe id="channelFrame" class="channel-frame" 
                 src="https://www.youtube.com/embed/videoseries?list=UUMwVpslitG_uJVsLwNkO3pw" 
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
@@ -203,51 +200,6 @@
 
         let previousStats = JSON.parse(localStorage.getItem('channelStats')) || null;
         let updateTimer = null;
-        let videoList = [];
-        let currentVideoIndex = -1;
-
-        // 채널의 영상 목록 가져오기
-        async function loadVideoList() {
-            try {
-                const response = await fetch(
-                    `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${CHANNEL_ID}&maxResults=50&order=date&type=video&key=${API_KEY}`
-                );
-                
-                if (response.ok) {
-                    const data = await response.json();
-                    videoList = data.items.map(item => item.id.videoId);
-                    console.log(`${videoList.length}개의 영상을 불러왔습니다.`);
-                    
-                    // 첫 번째 랜덤 영상 로드
-                    playRandomVideo();
-                }
-            } catch (error) {
-                console.log('영상 목록 로드 실패');
-            }
-        }
-
-        // 랜덤 영상 재생
-        function playRandomVideo() {
-            if (videoList.length === 0) {
-                console.log('영상 목록이 없습니다.');
-                return;
-            }
-            
-            // 이전과 다른 영상 선택
-            let newIndex;
-            do {
-                newIndex = Math.floor(Math.random() * videoList.length);
-            } while (newIndex === currentVideoIndex && videoList.length > 1);
-            
-            currentVideoIndex = newIndex;
-            const videoId = videoList[currentVideoIndex];
-            
-            // iframe src 변경
-            const iframe = document.getElementById('channelFrame');
-            iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=0`;
-            
-            console.log(`영상 ${currentVideoIndex + 1}/${videoList.length} 재생`);
-        }
 
         function formatNumber(num) {
             return new Intl.NumberFormat('ko-KR').format(num);
@@ -345,7 +297,6 @@
         // 페이지 로드 시 자동 실행
         window.onload = function() {
             loadChannelStats();
-            loadVideoList();
         };
     </script>
 </body>
